@@ -189,7 +189,7 @@ public class modele extends JPanel {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		frame.setAlwaysOnTop(true);
-		System.out.println("Fenêtre créer.");
+		System.out.println("Fenêtre créée.");
 	}
 
 	// Main
