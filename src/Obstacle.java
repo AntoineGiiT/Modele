@@ -11,6 +11,34 @@ class Obstacle {
 		this.mH = h;
 	}
 	
+	// Getters
+	public int getX() {
+		return this.mX;
+	}
+	public int getY() {
+		return this.mY;
+	}
+	public int getL() {
+		return this.mL;
+	}
+	public int getH() {
+		return this.mH;
+	}
+	
+	// Setters
+	public void setX(int X) {
+		this.mX = X;
+	}
+	public void setY(int Y) {
+		this.mY = Y;
+	}
+	public void setL(int L) {
+		this.mL = L;
+	}
+	public void setH(int H) {
+		this.mH = H;
+	}
+	
 	// Clone
 	@Override
 	protected Object clone() throws CloneNotSupportedException {
