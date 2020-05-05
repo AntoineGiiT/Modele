@@ -1,183 +1,322 @@
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.ActionListener;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class modele extends JPanel {
 	// Varialbes d'instance
+	public int nb_people = 10;
+	public int nb_obstacle = 0;
+	public int nb_out = 1; // Nombre de portes mais change rien
+	public double fV = 50;//Facteur de multiplication des vecteurs vitesses
+	public double fV2 = 70;// Facteur de multiplication des vecteurs accélération
+	public double fR = 70.0;// Facteur de répulsion des objets entre eux.
+	public double fS = 1.0;// Facteur d'attirance des portes.
+	public double Vmax = 1.0;// Vitesse maximale des individus entre eux.
+	
 	private Deque<Mec> individus = new ArrayDeque<>();
 	private Deque<Obstacle> obstacles = new ArrayDeque<>();
 	private Deque<Out> outs = new ArrayDeque<>();
-
 	private Deque<Coord_t> coord_t_liste = new ArrayDeque<>();
 	private Deque<Deque<Coord_t>> coords_liste = new ArrayDeque<>();
 
-	public int nb_people = 1;
-	public int nb_obstacle = 0;
-	public int nb_out = 1; // Change rien
-
 	final static int WIDTH = 700;
 	final static int HEIGHT = 500;
-
-	// Constructeur
-	public modele() {
-		/*
-		if(nb_out == 0) {
-			System.out.println("Il n'y a aucunes issues");
-		} else {
-		*/
-			System.out.println("Initialisation ...");
-			// LES VARIABLES
-			int fV = 50; //Facteur de multiplication des vecteurs vitesses
-			int fV2 = 70; // Facteur de multiplication des vecteurs accélération
-			float fR = (float)70; // Facteur de répulsion des objets entre eux.
-			float fS = (float)1; // Facteur d'attirance des portes.
-			float v_max = 1; // Vitesse maximale des individus entre eux.
-		
-			// CREATION DES INDIVIDUS
-			for(int i = 1; i <= nb_people ; i++) {
-				double x , y , dx , dy;
-				int size;
-				size = 10;   
-				x = Math.random()*(WIDTH - size);
-				y = Math.random()*(HEIGHT - 28 - size);
-				dx = Math.random()*(1);
-				dy = Math.random()*(1);
-				individus.add(new Mec(x,y,dx,dy,size));
-				}
-		
-			// CREATION DES OBSTACLES
-			for(int i = 1; i <= nb_obstacle ; i++ ) {
-				obstacles.add(new Obstacle((int)(Math.random()*WIDTH) , (int)(Math.random()*HEIGHT),(int)(Math.random()*150) , (int)(Math.random()*150)));
-			}
-		
-			// CREATION DES SORTIES
-			for(int i = 1 ; i <= nb_out ; i++) {
-				int size = 30;
-				//int x = (int)(Math.random()*(WIDTH-size));
-				//int y = (int)(Math.random()*(HEIGHT-size));
-				int x = WIDTH - size/2 -10;
-				int y = HEIGHT/2;
-				outs.add(new Out(x , y , size));
-			}
-			System.out.println("Calculs ...");
-		
-			// CALCULS
-			while (individus.size() > 0) {
-				//System.out.println(individus.size());
-				for(Mec p : individus) {
-					double ddx = 0.0;
-					double ddy = 0.0;
-				
-					//REPULSION ENTRE EUX
-					for(Mec q : individus) {
-						if(p != q) {
-							double dist_x = (q.mX + q.mSize/2) - (p.mX + p.mSize/2);
-							double dist_y = (q.mY + q.mSize/2) - (p.mY + p.mSize/2);
-							double D = Math.sqrt(Math.pow(dist_x , 2) + Math.pow(dist_y , 2));
-							ddx += -fR/Math.pow(D,3)*dist_x;
-							ddy += -fR/Math.pow(D,3)*dist_y;
-						}	
-					}
-				
-					// TO OUT
-					for(Out s : outs) {
-							double dist_x = (s.mX + s.mSize/2) - (p.mX + p.mSize/2);
-							double dist_y = (s.mY + s.mSize/2) - (p.mY + p.mSize/2);	
-							double D = Math.sqrt(Math.pow(dist_x , 2) + Math.pow(dist_y , 2));
-							if( D <= s.mSize/2) {
-								individus.remove(p);
-							}
-							ddx += fS*dist_x/D;
-							ddy += fS*dist_y/D;
-						}
-				
-					//COLLISION AVEC LES OBSTACLES
-					double X = p.mX + p.mDX;
-					double Y = p.mY + p.mDY;
-					for(Obstacle o : obstacles) {
-						if((X + p.mSize >= o.mX && p.mX + p.mSize < o.mX && Y + p.mSize >= o.mY && Y - p.mSize <= o.mY + o.mH) || (X - p.mSize <= o.mX + o.mL && p.mX - p.mSize > o.mX + o.mL && Y + p.mSize >= o.mY && Y - p.mSize <= o.mY + o.mH)){
-							p.mDX = - p.mDX;
-						}
-						if((Y + p.mSize >= o.mY && p.mY + p.mSize < o.mY && X + p.mSize >= o.mX && X - p.mSize <= o.mX + o.mL) || (Y - p.mSize <= o.mY + o.mH && p.mY - p.mSize > o.mY + o.mH && X + p.mSize >= o.mX && X - p.mSize <= o.mX + o.mL)){
-							p.mDY = - p.mDY;
-						}
-					}
-				
-					// VITESSE MAX
-					double v = Math.sqrt(Math.pow(p.mDX + ddx,2) + Math.pow(p.mDY,2));
-					if (v >= v_max) {
-						p.mDX = (p.mDX + ddx)/v*v_max;
-						p.mDY = (p.mDY + ddy)/v*v_max;
-					} else {
-						p.mDX += ddx;
-						p.mDY += ddy;
-					}
-				
-					// COLLISION AVEC LES BORDS
-					if(X < 0 || X > WIDTH - p.mSize/2 - 7){
-						p.mDX = -p.mDX;
-					}
-					if(Y < 0 || Y > HEIGHT - p.mSize - 30) {
-						p.mDY = -p.mDY;
-					}
-					p.mX += p.mDX ;
-					p.mY += p.mDY ;
-				
-					// ENREGISTREMENT DES DONNEES INDIVIDUELS POUR REPRESENTATION GRAPHIQUE
-					coord_t_liste.add(new Coord_t((int)p.mX , (int)p.mY));
-				}
-			
-				// ENREGISTREMENT COLLECTIF POUR UNE DATE T
-				coords_liste.add(coord_t_liste);
-				coord_t_liste = new ArrayDeque<>();
-			}
-			System.out.println("Rendu graphique ...");
-		
-			// RENDU GRAPHIQUE DES CALCULS
-			setBackground(Color.BLACK);
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					while(true) {
-						repaint();
-						try {
-							Thread.sleep(1000/60l);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-			}).start();
-		}
-		@Override
-		protected void paintComponent(Graphics g) {
-			super.paintComponent(g);
-		
-			// UPDATE GRAPHIQUE
-			g.setColor(Color.BLUE);
-			for(Obstacle o : obstacles) {
-				g.fillRect(o.mX , o.mY , o.mL , o.mH);
-			}
-			g.setColor(Color.ORANGE);
-			for(Out s : outs) {
-				g.fillRect(s.mX , s.mY , s.mSize , s.mSize);	
-			}
-			if (coords_liste.size() > 0) {
-				g.setColor(Color.YELLOW);
-				Deque<Coord_t> coord_at_t = new ArrayDeque<>();
-				coord_at_t = coords_liste.remove();
-				for(Coord_t c : coord_at_t) {
-				g.fillOval(c.mX , c.mY , 8 , 8);
-				}
-			}
-		}
 	
+	// Constructeur
+	public modele(int nb_people, int nb_obstacle, int nb_out, double fV, double fV2, double fR, double fS, double Vmax, Deque<Mec> individus, Deque<Obstacle> obstacles, Deque<Out> outs, Deque<Coord_t> coord_t_liste, Deque<Deque<Coord_t>> coords_liste) {
+		nb_out = this.nb_out;
+		if(nb_out == 0) {
+			System.out.println("Il n'y a aucunes issues dans ce modèle");
+		} else {
+			this.individus = individus;
+			this.obstacles = obstacles;
+			this.outs = outs;
+			this.coord_t_liste = coord_t_liste;
+			this.coords_liste = coords_liste;
+			this.nb_people = nb_people;
+			this.nb_obstacle = nb_obstacle;
+			this.fV = fV;
+			this.fV2 = fV2;
+			this.fR = fR;
+			this.fS = fS;
+			this.Vmax = Vmax;
+		}
+	}
+		
+	// RENDU GRAPHIQUE DES CALCULS
+	setBackground(Color.BLACK);
+	new Thread(new Runnable() {
+		@Override
+		public void run() {
+			while(true) {
+				repaint();
+				//secondes = secondes + 0.1;
+				try {
+					Thread.sleep(1000/60l);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	).start();
+	}
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		// UPDATE GRAPHIQUE
+		g.setColor(Color.BLUE);
+		for(Obstacle o : obstacles) {
+			g.fillRect(o.mX , o.mY , o.mL , o.mH);
+		}
+		g.setColor(Color.ORANGE);
+		for(Out s : outs) {
+			g.fillRect(s.mX , s.mY , s.mSize , s.mSize);	
+		}
+		if (coords_liste.size() > 0) {
+			g.setColor(Color.YELLOW);
+			Deque<Coord_t> coord_at_t = new ArrayDeque<>();
+			coord_at_t = coords_liste.remove();
+			for(Coord_t c : coord_at_t) {
+			g.fillOval(c.mX , c.mY , 8 , 8);
+			}
+		}
+	}
+	// Getters 
+	public int getNbPeople() {
+		return this.nb_people;
+	}
+	public int getNbObstacles() {
+		return this.nb_obstacle;
+	}
+	public int getNbSorties() {
+		return this.nb_out;
+	}
+	public double getFV() {
+		return this.fV;
+	}
+	public double getFV2() {
+		return this.fV2;
+	}
+	public double getFR() {
+		return this.fR;
+	}
+	public double getFS() {
+		return this.fS;
+	}
+	public double getVmax() {
+		return this.Vmax;
+	}
+	public Deque<Mec> getIndividus(){
+		return this.individus;
+	}
+	public Deque<Out> getSorties(){
+		return this.outs;
+	}
+	public Deque<Obstacle> getObstacles(){
+		return this.obstacles;
+	}
+	public Deque<Coord_t> getCoordT(){
+		return this.coord_t_liste;
+	}
+	public Deque<Deque<Coord_t>> getCoordsList(){
+		return this.coords_liste;
+	}
+	
+	// Setters
+	public void setNbPeople(int nbPeople) {
+		this.nb_people = nbPeople;
+	}
+	public void setNbObstacles(int nbObstacles) {
+		this.nb_obstacle = nbObstacles;
+	}
+	public void setNbSorties(int nbSorties) {
+		this.nb_out = nbSorties;
+	}
+	public void setFV(double FV) {
+		this.fV = FV;
+	}
+	public void setFV2(double FV2) {
+		this.fV2 = FV2;
+	}
+	public void setFR(double FR) {
+		this.fR = FR;
+	}
+	public void setFS(double FS) {
+		this.fS = FS;
+	}
+	public void setVmax(double Vmax) {
+		this.Vmax = Vmax;
+	}
+	public void setIndividus(int nbPeople) {
+		this.individus = createIndividus(nbPeople);
+	}
+	public void setSorties(int nbSorties) {
+		this.outs = createSorties(nbSorties);
+	}
+	public void setObstacles(int nbObstacles) {
+		this.obstacles = createObstacles(nbObstacles);
+	}
 
+	
 	// Méthodes
+	public Deque<Mec> createIndividus() {
+		int nbPeople = this.getNbPeople();
+		for(int i = 1; i <= nbPeople ; i++) {
+			double x ,y ,dx ,dy;
+			int size = 10;
+			x = Math.random()*(WIDTH - size);
+			y = Math.random()*(HEIGHT - 28 - size);
+			dx = Math.random()*(1);
+			dy = Math.random()*(1);
+			individus.add(new Mec(x,y,dx,dy,size));
+		}
+		return individus;
+	}
+	public Deque<Mec> createIndividus(int nbPeople){
+		for(int i = 1; i <= nbPeople ; i++) {
+			double x ,y ,dx ,dy;
+			int size = 10;
+			x = Math.random()*(WIDTH - size);
+			y = Math.random()*(HEIGHT - 28 - size);
+			dx = Math.random()*(1);
+			dy = Math.random()*(1);
+			individus.add(new Mec(x,y,dx,dy,size));
+		}
+		return individus;
+	}
+	public Deque<Out> createSorties() {
+		int nbOut = this.getNbSorties();
+		for(int i = 1 ; i <= nbOut ; i++) {
+			int size = 30;
+			//int x = (int)(Math.random()*(WIDTH-size));
+			//int y = (int)(Math.random()*(HEIGHT-size));
+			int x = WIDTH - size/2 -10;
+			int y = HEIGHT/2;
+			outs.add(new Out(x , y , size));
+		}
+	return outs;
+	}
+	public Deque<Out> createSorties(int nbSorties){
+		for(int i = 1 ; i <= nbSorties ; i++) {
+			int size = 30;
+			//int x = (int)(Math.random()*(WIDTH-size));
+			//int y = (int)(Math.random()*(HEIGHT-size));
+			int x = WIDTH - size/2 -10;
+			int y = HEIGHT/2;
+			outs.add(new Out(x , y , size));
+		}
+	return outs;
+	}
+	public Deque<Obstacle> createObstacles(){
+		int nbObstacles = this.getNbObstacles();
+		for(int i = 1; i <= nbObstacles ; i++ ) {
+			obstacles.add(new Obstacle((int)(Math.random()*WIDTH) , (int)(Math.random()*HEIGHT),(int)(Math.random()*150) , (int)(Math.random()*150)));
+		}
+	return obstacles;
+	}
+	public Deque<Obstacle> createObstacles(int nbObstacles){
+		for(int i = 1; i <= nbObstacles ; i++ ) {
+			obstacles.add(new Obstacle((int)(Math.random()*WIDTH) , (int)(Math.random()*HEIGHT),(int)(Math.random()*150) , (int)(Math.random()*150)));
+		}
+	return obstacles;
+	}
+	public void repulsionIndividus(){ 
+		Deque<Mec> individus = this.getIndividus();
+		for(Mec p : individus) {
+			double ddx = 0.0;
+			double ddy = 0.0;
+			for(Mec q : individus) {
+				if(p != q) {
+					double dist_x = (q.getX() + q.getSize()/2) - (p.getX() + p.getSize()/2);
+					double dist_y = (q.getY() + q.getSize()/2) - (p.getY() + p.getSize()/2);
+					double D = Math.sqrt(Math.pow(dist_x , 2) + Math.pow(dist_y , 2));
+					ddx += -this.getFR()/Math.pow(D,3)*dist_x;
+					ddy += -this.getFR()/Math.pow(D,3)*dist_y;
+					p.setDX(ddx);
+					p.setDY(ddy);
+				}
+			}
+		}
+	}
+	public void attirancePorte(){ 
+		Deque<Out> sorties = this.getSorties();
+		Deque<Mec> individus = this.getIndividus();
+		for(Mec p : individus) {
+			double ddx = 0.0;
+			double ddy = 0.0;
+			for(Out s : sorties) {
+				double dist_x = (s.getX() + s.getSize()/2) - (p.getX() + p.getSize()/2);
+				double dist_y = (s.getY() + s.getSize()/2) - (p.getY() + p.getSize()/2);	
+				double D = Math.sqrt(Math.pow(dist_x , 2) + Math.pow(dist_y , 2));
+				ddx += fS*dist_x/D;
+				ddy += fS*dist_y/D;
+				p.setDX(ddx);
+				p.setDY(ddy);
+			}
+		}
+	}
+	public void repulsionObstacles() {
+		Deque<Mec> individus = this.getIndividus();
+		Deque<Out> sorties = this.getSorties();
+		for(Mec p : individus) {
+			double xm = p.getX();
+			double ym = p.getY();
+			int msize = p.getSize();
+			double dxm = p.getDX();
+			double dym = p.getDY();
+			for(Out o : sorties) {
+				double xo = o.getX();
+				double yo = o.getY();
+				int osize = o.getSize();
+				if(((xo < xm + msize + dxm) && (xm + msize + dxm < xo + osize)) && ((yo < ym + msize + dym ) && (ym + msize + dym < yo + osize))) {
+					if((xo < xm + msize + dxm) && (xm + msize + dxm < xo + osize)) {
+						p.setDX(0);// On annule la composante qui fait entrer dans l'obstacle 
+					} else if((yo < ym + msize + dym ) && (ym + msize + dym < yo + osize)) {
+						p.setDY(0);// On annule la composante qui fait entrer dans l'obstacle 
+					}
+				}
+			}
+		}
+	}
+	public void repulsionBords(){
+		Deque<Mec> individus = this.getIndividus();
+		for(Mec p : individus) {
+			if(p.getX() < 0 || p.getX() > WIDTH - p.getSize()/2 - 8){
+				p.setDX(-p.getDX());
+			}
+			if(p.getY() < 0 || p.getY() > HEIGHT - p.getSize() - 30) {
+				p.setDY(-p.getDY());
+			}
+		}
+	}
+	public void vitesseMax() {
+		Deque<Mec> individus = this.getIndividus();
+		for(Mec p : individus) {
+			double ddx = 0.0;
+			double ddy = 0.0;
+			double v = Math.sqrt(Math.pow(p.getDX() + ddx,2) + Math.pow(p.getDY(),2));
+			if (v >= Vmax) {
+				p.setDX((p.getDX() + ddx)/v*this.getVmax());
+				p.setDY((p.getDY() + ddy)/v*this.getVmax());
+			} else {
+				p.setDX(ddx);
+				p.setDY(ddy);
+			}
+		}
+	}
+	public static Deque<Mec> clone(Deque<Mec> clone){
+		Deque<Mec> cloned = new ArrayDeque<>();
+		for(Mec m : clone) {
+			cloned.add(m);
+		}
+		return cloned;
+	}
 	public static void creatFrame(int w, int h) {
 		System.out.println("Création de la fenetre de modelisation... ");
 		JFrame frame = new JFrame("MODELISATION D'UNE FOULE");
